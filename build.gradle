@@ -3,6 +3,11 @@ plugins {
     id 'maven-publish'
     id 'checkstyle'
     id 'com.diffplug.spotless' version '6.25.0'
+    id 'application'
+}
+
+application {
+    mainClass = 'com.agentfactory.Main'
 }
 
 group = 'com.agentfactory'
@@ -19,7 +24,10 @@ dependencies {
     
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
     testImplementation 'org.assertj:assertj-core:3.25.3'
+    testImplementation 'org.mockito:mockito-core:5.10.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.10.0'
 }
 
 publishing {

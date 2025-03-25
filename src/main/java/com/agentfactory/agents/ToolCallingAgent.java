@@ -11,6 +11,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.*;
 
+/**
+ * An agent that can call tools to accomplish tasks.
+ * The agent processes tasks by generating responses from an AI model and
+ * executing tool calls until a final answer is reached.
+ */
 public class ToolCallingAgent {
     private final AIModel model;
     private final AgentMemory memory;
@@ -18,8 +23,15 @@ public class ToolCallingAgent {
     private final String systemPrompt;
     private final Gson gson = new Gson();
     private int stepCounter = 0;
-    private static final int MAX_STEPS = 10; // Prevent infinite loops
+    private static final int MAX_STEPS = 10;
 
+    /**
+     * Creates a new tool calling agent with the specified model and tools.
+     * Loads the default system prompt from configuration.
+     *
+     * @param model the AI model to use for generating responses
+     * @param tools the list of tools available to the agent
+     */
     public ToolCallingAgent(AIModel model, List<Tool> tools) {
         this.model = model;
         this.memory = new AgentMemory();
@@ -30,6 +42,13 @@ public class ToolCallingAgent {
         this.systemPrompt = PromptLoader.loadPrompt("toolcalling_agent.yaml");
     }
 
+    /**
+     * Creates a new tool calling agent with the specified model, system prompt, and tools.
+     *
+     * @param model the AI model to use for generating responses
+     * @param systemPrompt the system prompt to use for the agent
+     * @param tools the list of tools available to the agent
+     */
     public ToolCallingAgent(AIModel model, String systemPrompt, List<Tool> tools) {
         this.model = model;
         this.memory = new AgentMemory();
@@ -40,6 +59,16 @@ public class ToolCallingAgent {
         this.systemPrompt = systemPrompt;
     }
 
+    /**
+     * Runs the agent on the specified task.
+     * The agent will generate responses and execute tool calls until a final answer is reached
+     * or the maximum number of steps is exceeded.
+     *
+     * @param task the task for the agent to perform
+     * @return the final answer from the agent
+     * @throws IllegalArgumentException if an unknown tool is called
+     * @throws RuntimeException if the maximum number of steps is reached without a final answer
+     */
     public String run(String task) {
         List<Message> messages = new ArrayList<>();
         messages.add(new Message("system", systemPrompt));
@@ -61,7 +90,7 @@ public class ToolCallingAgent {
             if (toolName.equals("final_answer")) {
                 observation = (String) tools.get(toolName).execute(args);
                 memory.addStep(new ActionStep(stepCounter++, actionJson, observation));
-                return observation; // Task completed
+                return observation;
             } else {
                 observation = (String) tools.get(toolName).execute(args);
                 memory.addStep(new ActionStep(stepCounter++, actionJson, observation));
@@ -73,8 +102,14 @@ public class ToolCallingAgent {
         throw new RuntimeException("Max steps reached without final answer.");
     }
 
+    /**
+     * Extracts a JSON action from the model's response.
+     *
+     * @param response the model's response
+     * @return the extracted JSON action as a string
+     * @throws RuntimeException if no valid action JSON is found
+     */
     private String extractAction(String response) {
-        // Look for an action block in the response
         int actionStart = response.indexOf("{");
         int actionEnd = findMatchingBrace(response, actionStart);
 
@@ -85,6 +120,13 @@ public class ToolCallingAgent {
         return response.substring(actionStart, actionEnd + 1);
     }
 
+    /**
+     * Finds the matching closing brace for an opening brace.
+     *
+     * @param text the text to search in
+     * @param openBraceIndex the index of the opening brace
+     * @return the index of the matching closing brace, or -1 if not found
+     */
     private int findMatchingBrace(String text, int openBraceIndex) {
         if (openBraceIndex == -1) return -1;
 
@@ -97,9 +139,14 @@ public class ToolCallingAgent {
             if (count == 0) return i;
         }
 
-        return -1; // No matching closing brace
+        return -1;
     }
 
+    /**
+     * Gets the agent's memory.
+     *
+     * @return the agent's memory
+     */
     public AgentMemory getMemory() {
         return memory;
     }

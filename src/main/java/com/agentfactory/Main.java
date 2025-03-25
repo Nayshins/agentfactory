@@ -1,6 +1,7 @@
 package com.agentfactory;
 
 import com.agentfactory.agents.ToolCallingAgent;
+import com.agentfactory.config.ApiConfig;
 import com.agentfactory.models.AIModel;
 import com.agentfactory.models.OpenAIModel;
 import com.agentfactory.tools.FinalAnswerTool;
@@ -22,28 +23,30 @@ public class Main {
      * @param args Command line arguments (not used)
      */
     public static void main(String[] args) {
-        // Get OpenAI API key from environment
-        String apiKey = System.getenv("OPENAI_API_KEY");
-        if (apiKey == null || apiKey.isEmpty()) {
-            System.err.println("Error: OPENAI_API_KEY environment variable is not set");
+        try {
+            // Load configuration from environment variables
+            ApiConfig config = ApiConfig.fromEnvironment();
+            
+            // Example 1: Basic agent with tools
+            runBasicAgent(config);
+        } catch (IllegalStateException e) {
+            System.err.println("Error: " + e.getMessage());
+            System.err.println("Make sure both OPENAI_API_KEY and SERPER_API_KEY environment variables are set.");
             System.exit(1);
         }
-
-        // Example 1: Basic agent with tools
-        runBasicAgent(apiKey);
     }
 
     /**
      * Example of creating and running a basic agent with tools.
      *
-     * @param apiKey The OpenAI API key
+     * @param config API configuration containing necessary API keys
      */
-    private static void runBasicAgent(String apiKey) {
-        // Initialize the model
-        AIModel model = new OpenAIModel(apiKey, "gpt-4");
+    private static void runBasicAgent(ApiConfig config) {
+        // Initialize the model with configuration
+        AIModel model = new OpenAIModel(config, "gpt-4");
 
-        // Create tools
-        List<Tool> tools = Arrays.asList(new SearchTool(), new FinalAnswerTool());
+        // Create tools with configuration
+        List<Tool> tools = Arrays.asList(new SearchTool(config), new FinalAnswerTool());
 
         // Create agent
         ToolCallingAgent agent = new ToolCallingAgent(model, tools);
